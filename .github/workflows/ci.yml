@@ -24,7 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-      - run: npm ci
+      # npm install rather than npm ci, so CI does not depend on a lockfile
+      # being committed. Both respect package-lock.json when one exists.
+      - run: npm install --no-audit --no-fund
       - run: npm run lint
       - run: npm run build
