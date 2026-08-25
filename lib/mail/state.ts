@@ -67,10 +67,7 @@ export interface MailState {
   query: string;
 }
 
-/** Matches any non-empty value during grading. Used for text a model writes. */
-export const ANY = "<<any>>";
-
-export const STORAGE_KEY = "clickgym.mail.v1";
+export const STORAGE_KEY = "clickmail.mail.v1";
 
 /**
  * Storage namespace for one run.
@@ -140,7 +137,7 @@ function note(
   return {
     id,
     from,
-    to: "you@clickgym.example",
+    to: "you@clickmail.example",
     subject,
     body,
     receivedAt,
@@ -185,7 +182,7 @@ export function seedState(): MailState {
       {
         id: "m2",
         from: "noreply@dispatch.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Your order has shipped",
         body: "Order 55-2210 is on its way. Tracking: DX9920114.",
         receivedAt: "2026-08-22T08:40:00Z",
@@ -202,7 +199,7 @@ export function seedState(): MailState {
       {
         id: "m1",
         from: "ayesha@northwind.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Invoice INV-2026-0871 is overdue",
         body:
           "Hi,\n\nOur records show INV-2026-0871 for PKR 45,000 is 12 days " +
@@ -219,7 +216,7 @@ export function seedState(): MailState {
       {
         id: "m3",
         from: "hiring@brightlane.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Interview scheduling",
         body:
           "Are you free Thursday at 15:00 or Friday at 11:00 for a technical " +
@@ -236,7 +233,7 @@ export function seedState(): MailState {
       {
         id: "m4",
         from: "newsletter@weeklybytes.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Weekly Bytes #212",
         body: "Five things worth reading this week.",
         receivedAt: "2026-08-22T07:30:00Z",
@@ -261,43 +258,43 @@ export function seedState(): MailState {
         "2026-08-22T05:20:00Z", false),
 
       // ---------------------------------------------------------- drafts
-      note("d1", "you@clickgym.example", "Re: Review requested: settings redesign",
+      note("d1", "you@clickmail.example", "Re: Review requested: settings redesign",
         "Looks good overall. Two notes on the empty state —",
         "2026-08-22T08:35:00Z", true, { folder: "drafts", to: "design@internal.example" }),
-      note("d2", "you@clickgym.example", "Q3 planning thoughts",
+      note("d2", "you@clickmail.example", "Q3 planning thoughts",
         "Rough notes before Monday. Not finished.",
         "2026-08-21T17:40:00Z", true, { folder: "drafts", to: "lead@internal.example" }),
-      note("d3", "you@clickgym.example", "Re: Contract renewal, October",
+      note("d3", "you@clickmail.example", "Re: Contract renewal, October",
         "Thanks Sam — one question about the support tier",
         "2026-08-21T14:02:00Z", true, { folder: "drafts", to: "sam@quaystreet.example" }),
-      note("d4", "you@clickgym.example", "", "", "2026-08-20T09:15:00Z", true,
+      note("d4", "you@clickmail.example", "", "", "2026-08-20T09:15:00Z", true,
         { folder: "drafts", to: "" }),
 
       // ---------------------------------------------------------- outbox
-      note("o1", "you@clickgym.example", "Re: On-call rota for September",
+      note("o1", "you@clickmail.example", "Re: On-call rota for September",
         "Confirmed for week 38.", "2026-08-22T09:02:00Z", true,
         { folder: "outbox", to: "rota@internal.example" }),
-      note("o2", "you@clickgym.example", "Expenses for August",
+      note("o2", "you@clickmail.example", "Expenses for August",
         "Receipts attached.", "2026-08-22T08:55:00Z", true,
         { folder: "outbox", to: "expenses@internal.example" }),
 
       // ---------------------------------------------------------- sent
-      note("s1", "you@clickgym.example", "Re: Feedback on the latest build",
+      note("s1", "you@clickmail.example", "Re: Feedback on the latest build",
         "Thanks — I have logged the Safari issue and will look this week.",
         "2026-08-21T15:02:00Z", true, { folder: "sent", to: "maya@clientside.example" }),
-      note("s2", "you@clickgym.example", "Re: Standup notes, Wednesday",
+      note("s2", "you@clickmail.example", "Re: Standup notes, Wednesday",
         "Nothing blocking on my side.", "2026-08-21T09:40:00Z", true,
         { folder: "sent", to: "standup@internal.example" }),
-      note("s3", "you@clickgym.example", "Re: Invoice QS-4471 for July",
+      note("s3", "you@clickmail.example", "Re: Invoice QS-4471 for July",
         "Received, thank you. Scheduled for the September run.",
         "2026-08-20T16:18:00Z", true, { folder: "sent", to: "billing@quaystreet.example" }),
-      note("s4", "you@clickgym.example", "Availability for next week",
+      note("s4", "you@clickmail.example", "Availability for next week",
         "Free Tuesday and Thursday afternoon.", "2026-08-20T11:05:00Z", true,
         { folder: "sent", to: "kate@brightlane.example" }),
-      note("s5", "you@clickgym.example", "Re: Your talk proposal was received",
+      note("s5", "you@clickmail.example", "Re: Your talk proposal was received",
         "Thanks for confirming.", "2026-08-19T18:22:00Z", true,
         { folder: "sent", to: "cfp@devconf.example" }),
-      note("s6", "you@clickgym.example", "Handover notes",
+      note("s6", "you@clickmail.example", "Handover notes",
         "Everything is in the shared drive under August.",
         "2026-08-19T10:47:00Z", true, { folder: "sent", to: "lead@internal.example" }),
 
@@ -315,7 +312,7 @@ export function seedState(): MailState {
       {
         id: "m5",
         from: "accounts@brightlane.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Signed contract for the September engagement",
         body:
           "Hi,\n\nAttaching the countersigned agreement for September. Please keep " +
@@ -331,7 +328,7 @@ export function seedState(): MailState {
       {
         id: "m6",
         from: "security@rnetbank.example",
-        to: "you@clickgym.example",
+        to: "you@clickmail.example",
         subject: "Unusual activity on your account",
         body:
           "We have detected unusual activity. Verify your identity immediately at " +

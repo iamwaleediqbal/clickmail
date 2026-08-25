@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="clickgym">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="clickmail">
   <!--
-    A cursor over a target: the whole project in one mark. Drawn rather than
-    generated so it stays crisp at 16px, and using currentColor-free explicit
-    fills because a favicon is rendered outside the page's theme.
+    An envelope with a cursor on it: mail, operated by something that is not a
+    hand. Drawn rather than generated so it stays crisp at 16px, and with
+    explicit fills rather than currentColor because a favicon is rendered
+    outside the page's theme.
   -->
   <rect width="32" height="32" rx="7" fill="#0b1220"/>
-  <circle cx="14" cy="14" r="7.5" fill="none" stroke="#3b82f6" stroke-width="2"/>
-  <circle cx="14" cy="14" r="2" fill="#3b82f6"/>
-  <path d="M17.5 17.5 L26 21 L21.6 22.4 L20.2 26.8 Z" fill="#e2e8f0" stroke="#0b1220" stroke-width="1.2" stroke-linejoin="round"/>
+  <rect x="5" y="9" width="18" height="13" rx="2.5" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <path d="M5.8 10.5 L14 17 L22.2 10.5" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18.5 18.5 L27 22 L22.6 23.4 L21.2 27.8 Z" fill="#e2e8f0" stroke="#0b1220" stroke-width="1.2" stroke-linejoin="round"/>
 </svg>

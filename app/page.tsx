@@ -1,59 +1,68 @@
-"use client";
+import { ArrowRight, Mail } from "lucide-react";
+import Link from "next/link";
 
-import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { FOLDER_ORDER } from "@/lib/mail/state";
 
-import { Dashboard } from "@/components/harness/dashboard";
-import { RecentRuns } from "@/components/harness/recent-runs";
-import { RunLauncher } from "@/components/harness/run-launcher";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "@/hooks/use-session";
-
-export default function Overview() {
-  const session = useSession();
-
+/**
+ * What this is, before you are dropped into a mailbox.
+ *
+ * The gym is a public application. Anyone can open it, click around, and see
+ * exactly what an agent is asked to operate — which is most of what makes a
+ * score meaningful. A visitor who has used the thing knows what "archive the
+ * newsletter" is actually asking for.
+ *
+ * There is nothing else here on purpose. No tasks, no grading, no runs, no
+ * key. Those belong to the harness, which drives this page from outside.
+ */
+export default function Home() {
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Agent evaluation</h1>
-        <p className="max-w-[80ch] text-sm leading-relaxed text-muted-foreground">
-          An agent is given a task in plain English and turned loose on a live mail
-          application. By default it sees only a screenshot and answers with coordinates —
-          the same leverage a person with a mouse has, and no more.
+    <main className="mx-auto flex min-h-svh max-w-2xl flex-col justify-center gap-8 px-6 py-16">
+      <div className="space-y-4">
+        <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground">
+          <Mail className="size-3.5" aria-hidden />
+          Environment under test
+        </span>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">clickmail</h1>
+        <p className="text-lg leading-relaxed text-muted-foreground">
+          A mail client that exists to be operated by something that is not a person. It holds
+          fifty-two messages across {FOLDER_ORDER.length} folders and knows nothing about
+          tasks, grading or models — it just is a mailbox, and it will tell an automated
+          driver what state it is in.
         </p>
-        <p className="max-w-[80ch] text-sm leading-relaxed text-muted-foreground">
-          Grading compares the mailbox it leaves behind against the one a correct solve
-          produces, never the route it took: there are many correct routes, and a shorter one
-          is not a failure. Doing everything asked <em>and one thing more</em> is a failure,
-          and is reported as its own outcome rather than a pass.
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <Link href="/gym">
+            Open the mailbox
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <a href="https://github.com/iamwaleediqbal/clickmail">Source</a>
+        </Button>
+      </div>
+
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-4 text-sm leading-relaxed text-muted-foreground">
+        <p>
+          <span className="font-medium text-foreground">Why it is separate.</span> Grading an
+          agent and being the thing it operates are two jobs. Keeping them in one repository
+          made the second look like a feature of the first, and made &ldquo;point it at a real
+          application&rdquo; sound out of scope.
         </p>
-      </header>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          What has been measured
-        </h2>
-        <Dashboard />
-      </section>
-
-      {/*
-        Owner-only, and below the evidence rather than above it. Starting a run
-        spends a model call, so a visitor cannot — and a locked form at the top
-        of the page tells a reader nothing about what the project does.
-      */}
-      {!session.loading && session.owner && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            New evaluation
-          </h2>
-          <Suspense fallback={<Skeleton className="h-72 w-full" />}>
-            <RunLauncher />
-          </Suspense>
-        </section>
-      )}
-
-      {/* The card carries its own header and a link to the full list, so a
-          section heading above it would say the same thing twice. */}
-      <RecentRuns limit={6} />
-    </div>
+        <p>
+          The harness lives at{" "}
+          <a
+            className="font-medium text-foreground underline underline-offset-4"
+            href="https://github.com/iamwaleediqbal/agentscore"
+          >
+            agentscore
+          </a>
+          . It drives this page with a real browser, reads the world before and after, and
+          decides whether what changed was what was asked for.
+        </p>
+      </div>
+    </main>
   );
 }

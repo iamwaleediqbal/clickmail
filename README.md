@@ -1,15 +1,36 @@
-# clickgym
+# clickmail
 
-**A computer-use gym for agents, graded on the final state of the app rather
-than the route the agent took.** The model is shown a screenshot of a live mail
-client and nothing else, answers with coordinates, and the harness fires a real
-pointer sequence at that point. Finding the control is part of the task.
+A mail client that exists to be operated by something that is not a person.
 
-Live: `https://clickgym.vercel.app`
+![CI](https://github.com/iamwaleediqbal/clickmail/actions/workflows/ci.yml/badge.svg)
 
-![CI](https://github.com/iamwaleediqbal/clickgym/actions/workflows/ci.yml/badge.svg)
+Fifty-two messages across seven folders, with search, labels, spam and a
+composer. It is a public web page: open it and use it, which is most of what
+makes a score about it mean anything.
 
----
+**It contains no grader, no tasks, no runs, no models and no keys.** Those
+belong to the harness — [agentscore](https://github.com/iamwaleediqbal/agentscore)
+— which drives this page from outside with a real browser. An environment that
+contains its own grader can only ever score itself.
+
+## The contract
+
+The whole interface a harness gets:
+
+```ts
+reset()      // discard everything, and report the world it starts in
+state()      // report the world as it stands
+controls()   // report every control currently rendered
+```
+
+No storage key, no DOM, no framework. The harness fetches the world before the
+task, lets the agent act however it acts, fetches it again when the agent stops,
+and grades one snapshot against the other.
+
+`controls()` exists because the check it replaced could not survive the split — a
+test that read the harness's source to confirm the action space matched these
+buttons. Asking the running application is better anyway: it answers for the
+build that is deployed rather than the source somebody read.
 
 ## The idea
 
@@ -29,6 +50,41 @@ actual   = diff(seed -> submitted)   what this agent changed
 missing  = required - actual         it did not finish
 extra    = actual - required         it did more than it was asked
 ```
+
+### The grader belongs to the harness, not to the app
+
+Worth being exact about, because the file used to sit in the wrong place and
+that said something untrue about the architecture.
+
+The mail app is an **environment**. It knows how to be a mailbox and nothing
+else. The **harness** drives it, records what it did, and grades the world it
+left behind. Grading is not a property of the mail app, and while
+`grade.ts` lived beside it — typed against `MailState`, flattening
+`state.emails` — the whole project read as though it could only ever grade this
+one toy.
+
+So the grader takes an adapter instead:
+
+```ts
+interface Describable<S> {
+  id: string;
+  flatten(state: S): Map<string, unknown>;   // the world as leaf paths
+  volatile: RegExp[];                        // paths that move on their own
+  subjectOf(path: string): string;           // which object a path belongs to
+  incidentalSuffix?: string;                 // a side effect of acting, not an act
+}
+```
+
+That is the entire contract. `lib/harness/grade.ts` imports **nothing at all**
+and mentions no idea from any application; `lib/gym/describe.ts` is a hundred
+lines that say how a mailbox flattens. Pointing the harness at another
+application — including a real one — is writing another adapter, not editing
+the grader.
+
+`tests/grader-is-generic.test.ts` is what keeps that honest. It grades a small
+toy text editor through the same functions, including catching overreach in it,
+so a grader that grows a dependency on the mailbox fails there rather than in
+review.
 
 ## Two action spaces, and why both are here
 
@@ -227,11 +283,11 @@ Node 22 or newer, and a free OpenRouter key from
 **1. Run it locally.**
 
 ```bash
-git clone git@github.com-personal:iamwaleediqbal/clickgym.git
-cd clickgym
+git clone git@github.com-personal:iamwaleediqbal/clickmail.git
+cd clickmail
 npm install
 cp .env.example .env.local     # put your key in it
-npm test                       # 261 tests
+npm test                       # 270 tests
 npm run dev                    # http://localhost:3000
 ```
 
@@ -241,7 +297,7 @@ before the install step.
 
 **2. Deploy.**
 
-On [vercel.com](https://vercel.com): **Add New → Project**, import `clickgym`,
+On [vercel.com](https://vercel.com): **Add New → Project**, import `clickmail`,
 and add one environment variable before deploying:
 
 | Name | Value |
@@ -252,7 +308,7 @@ and add one environment variable before deploying:
 
 | Name | Value |
 |---|---|
-| `SITE_URL` | the URL Vercel gave you, e.g. `https://clickgym.vercel.app` |
+| `SITE_URL` | the URL Vercel gave you, e.g. `https://clickmail.vercel.app` |
 
 OpenRouter attributes free-tier usage to that header. It is not required for
 the app to work, and setting it keeps the demo from looking like an anonymous
@@ -323,7 +379,7 @@ empty table.
 ### Checks
 
 ```bash
-npm test                 # 261 tests, no dependencies
+npm test                 # 270 tests, no dependencies
 npm run typecheck        # the app
 npm run typecheck:runner # the Playwright runner, which the app's tsconfig excludes
 ```
@@ -519,7 +575,7 @@ Nothing can trap SIGKILL, so `push.sh` also refuses to commit a tree with a
 stray `MUTATED` in it. That is not hypothetical: a `timeout` wrapping these
 checks once left one in a workflow file.
 
-Seventy-five mutations across the three, all caught, every file restored
+Seventy-nine mutations across the three, all caught, every file restored
 afterwards — including on a mutation that fails. Run the one whose area you
 touched.
 

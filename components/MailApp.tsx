@@ -24,8 +24,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type Action, matchesQuery } from "@/lib/gym/actions";
-import { FOLDER_ORDER, type Email, type Folder, type MailState } from "@/lib/gym/state";
+import { type Action, matchesQuery } from "@/lib/mail/actions";
+import { FOLDER_ORDER, type Email, type Folder, type MailState } from "@/lib/mail/state";
 import { cn } from "@/lib/utils";
 
 /**

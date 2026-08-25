@@ -280,7 +280,7 @@ export function applyAction(state: MailState, action: Action): ApplyResult {
 
       next.emails.push({
         id: `sent-${n}`,
-        from: "you@clickgym.example",
+        from: "you@clickmail.example",
         to: next.composer.to,
         subject: next.composer.subject,
         body: next.composer.body,

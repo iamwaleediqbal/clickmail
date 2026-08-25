@@ -1,8 +1,8 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
-import { ACTION_NAMES, applyAction } from "../lib/gym/actions.ts";
-import { FOLDER_ORDER, type Folder, type MailState, clone, seedState } from "../lib/gym/state.ts";
+import { ACTION_NAMES, applyAction } from "../lib/mail/actions.ts";
+import { FOLDER_ORDER, type Folder, type MailState, clone, seedState } from "../lib/mail/state.ts";
 
 /**
  * Every action, against every folder, plus everything a model might send that
