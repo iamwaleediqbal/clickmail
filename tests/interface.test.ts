@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 
-import { ACTION_NAMES, applyAction } from "../lib/mail/actions.ts";
+import { ACTION_NAMES, READING_PANE, applyAction } from "../lib/mail/actions.ts";
 import { FOLDER_ORDER, seedState } from "../lib/mail/state.ts";
 
 /**
@@ -170,4 +170,57 @@ test("no ignore pattern can swallow a route", () => {
 
   const unanchored = patterns.filter((line) => !line.startsWith("/"));
   assert.deepEqual(unanchored, [], "these match at any depth, including inside app/");
+});
+
+test("the reading pane's actions are refused while a draft covers it", () => {
+  /*
+   * The composer replaces the reader rather than sitting beside it — look at
+   * MailApp: `state.composer ? <Composer/> : <Reader/>`. So while a draft is
+   * open not one `reader-*` control is on screen, and a person has to send,
+   * save or discard before reaching one again.
+   *
+   * The reducer performed them anyway, which is the same defect as `forward`
+   * and `mark_read` above, in its conditional form: an action the reducer takes
+   * that the interface offers no way to reach. Those two never have a control.
+   * These have one most of the time, which is what made it easy to miss — and
+   * three real agent runs hit it, each spending a turn and four seconds of
+   * browser timeout on a button that could not appear.
+   */
+  const state = seedState();
+  const target = state.emails.find((e) => e.folder === "inbox");
+  assert.ok(target);
+
+  const composing = applyAction(state, {
+    name: "compose",
+    args: { to: "a@b.example", subject: "draft", body: "half written" },
+  });
+  assert.ok(composing.state.composer, "the fixture has no draft open, so this proves nothing");
+
+  for (const name of READING_PANE) {
+    const result = applyAction(composing.state, {
+      name,
+      args: { id: target.id, name: "finance", to: "x@y.example" },
+    });
+    assert.equal(result.ok, false, `${name} was performed while a draft covered its control`);
+    assert.match(String(result.error), /draft is open/, `${name} failed without saying why`);
+  }
+
+  // The draft survives being refused. Losing it would be worse than the bug.
+  const after = applyAction(composing.state, { name: "archive", args: { id: target.id } });
+  assert.deepEqual(after.state.composer, composing.state.composer);
+});
+
+test("every action refused while composing has a control in the reading pane", () => {
+  // The list is written out, so it is checked against what the reader actually
+  // renders rather than against itself. `reader-*` ids only exist inside the
+  // Reader, which is precisely the thing the composer replaces.
+  const ids = rendered();
+  for (const name of READING_PANE) {
+    const control =
+      name === "reply" ? "reader-reply" :
+      name === "mark_unread" ? "reader-unread" :
+      name === "label" ? "reader-label-add" :
+      `reader-${name.replace(/_/g, "-")}`;
+    assert.ok(ids.has(control), `${name} is refused while composing but has no "${control}" to be blocked from`);
+  }
 });
