@@ -45,6 +45,17 @@ CASES = [
      "lib/mail/state.ts", 'query: typeof saved.query === "string" ? saved.query : "",',
      "query: saved.query as string,  // MUTATED"),
 
+    ("Save draft goes back to only rewriting the open composer",
+     "components/MailApp.tsx", 'dispatch({ name: "save_draft", args: {} });',
+     '// MUTATED'),
+
+    ("a saved draft is filed somewhere other than drafts",
+     "lib/mail/actions.ts", '        folder: "drafts",', '        folder: "outbox",  // MUTATED'),
+
+    ("saving a draft leaves the composer open, so the next action refiles it",
+     "lib/mail/actions.ts", '      next.composer = null;\n      next.selectedId = null;\n      return { state: next, ok: true };\n    }\n    case "discard"',
+     '      next.selectedId = null;\n      return { state: next, ok: true };  // MUTATED\n    }\n    case "discard"'),
+
     ("a corrupt folder in storage is trusted instead of reset",
      "lib/mail/state.ts",
      'folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",',
@@ -73,6 +84,32 @@ atexit.register(_restore_all)
 for _sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
     signal.signal(_sig, lambda *_: sys.exit(130))
 
+
+# ---------------------------------------------------------------- baseline
+#
+# A mutation is "caught" when the suite goes red. That inference only holds if
+# the suite was green to begin with. In the harness's copy of this tool it did
+# not: the test list named a file that had been deleted, node exited non-zero
+# because the path did not resolve, and every case reported CAUGHT without a
+# mutation ever changing an outcome. Two guards behind that were guarding
+# nothing for as long as the file was missing.
+#
+# So the list is run once, unmutated, before anything is edited.
+
+_BASELINE = {}
+
+
+def baseline_ok(tests):
+    key = tuple(tests)
+    if key not in _BASELINE:
+        r = subprocess.run(["node", "--test", "--experimental-strip-types", *tests],
+                           capture_output=True, text=True)
+        _BASELINE[key] = r.returncode == 0
+        if not _BASELINE[key]:
+            print(f"  BASELINE RED: {' '.join(tests)}")
+    return _BASELINE[key]
+
+
 results = []
 for name, rel, old, new in CASES:
     path = pathlib.Path(rel)
@@ -82,6 +119,9 @@ for name, rel, old, new in CASES:
     original = _stash(path)
     if old not in original:
         results.append((name, "SKIP - anchor not found"))
+        continue
+    if not baseline_ok(TESTS):
+        results.append((name, "*** BASELINE RED - proves nothing ***"))
         continue
     path.write_text(original.replace(old, new, 1), encoding="utf-8")
     try:

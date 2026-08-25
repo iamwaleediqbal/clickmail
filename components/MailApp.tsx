@@ -527,9 +527,19 @@ function Composer({
   const [subject, setSubject] = useState(composer.subject);
   const [body, setBody] = useState(composer.body);
 
-  // `send` reads whatever is in the composer, so the draft is written back
-  // first. dispatch applies synchronously, so the send sees the saved draft.
-  const save = () => dispatch({ name: "compose", args: { to, subject, body } });
+  /**
+   * Write what is typed into the composer, so the next action sees it.
+   *
+   * `compose` sets the *open* composer and nothing else — it is not a save. It
+   * used to be wired straight to the Save button, which is why saving a draft
+   * did nothing anyone could see: the composer stayed open, the drafts folder
+   * stayed the same size, and Discard threw the work away. Both buttons below
+   * now write first and then take the action that files the result.
+   *
+   * dispatch reads the latest state through a ref, so two calls in one handler
+   * apply in order and the second sees the first.
+   */
+  const write = () => dispatch({ name: "compose", args: { to, subject, body } });
 
   return (
     <article className="space-y-4">
@@ -540,14 +550,22 @@ function Composer({
           disabled={!to.trim()}
           title={to.trim() ? "Send" : "A recipient is required"}
           onClick={() => {
-            save();
+            write();
             dispatch({ name: "send", args: {} });
           }}
         >
           <Send className="size-3.5" />
           Send
         </Button>
-        <Button size="sm" variant="outline" data-testid="composer-save" onClick={save}>
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="composer-save"
+          onClick={() => {
+            write();
+            dispatch({ name: "save_draft", args: {} });
+          }}
+        >
           Save draft
         </Button>
         <Button

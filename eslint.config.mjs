@@ -15,7 +15,6 @@ const config = [
       ".next-stale*/**",
       "_to_delete/**",
       "node_modules/**",
-      "runner/node_modules/**",
       "next-env.d.ts",
     ],
   },

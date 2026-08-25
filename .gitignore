@@ -15,10 +15,11 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
-# Secrets. Never commit a key; everything reads from the environment.
+# Secrets. There is nothing here that reads a key — the environment takes no
+# configuration at all, which is why there is no .env.example to un-ignore —
+# but a dotenv that wanders in from a sibling checkout must not be committed.
 .env
 .env.*
-!.env.example
 *.pem
 *.key
 
@@ -42,8 +43,3 @@ npm-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Playwright scratch (the runs/ directory itself IS committed)
-test-results/
-playwright-report/
-
-runner/node_modules/

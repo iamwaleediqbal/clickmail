@@ -103,3 +103,50 @@ test("the reducer offers exactly the vocabulary the app can perform", () => {
   assert.ok(ACTION_NAMES.includes("open_folder"), "navigation must be possible");
   assert.ok(ACTION_NAMES.includes("search"), "search must be possible");
 });
+
+test("Save draft files a draft, rather than rewriting the open composer", () => {
+  /*
+   * The button dispatched `compose`, which sets the *open* composer and nothing
+   * else. Clicking Save did nothing a person could see: the composer stayed
+   * open, the drafts folder stayed the same size, and Discard threw the work
+   * away. It also left an agent asked to save a draft with no durable change to
+   * be graded on, because `composer` is gone the moment the composer closes and
+   * a verdict is computed from the final snapshot.
+   */
+  assert.match(
+    APP,
+    /data-testid="composer-save"[\s\S]{0,400}?name: "save_draft"/,
+    "the Save button does not file the draft",
+  );
+
+  const before = seedState().emails.filter((e) => e.folder === "drafts").length;
+  const opened = applyAction(seedState(), {
+    name: "compose",
+    args: { to: "a@b.example", subject: "Later", body: "half a thought" },
+  });
+  const saved = applyAction(opened.state, { name: "save_draft", args: {} });
+
+  assert.equal(saved.ok, true, "save_draft was refused with a draft open");
+  assert.equal(
+    saved.state.emails.filter((e) => e.folder === "drafts").length,
+    before + 1,
+    "the draft never reached the drafts folder",
+  );
+  assert.equal(saved.state.composer, null, "the composer stayed open after saving");
+});
+
+test("every control the composer offers leads somewhere", () => {
+  // A button wired to an action that does not do what the button says is worse
+  // than a missing button: the missing one is discoverable.
+  for (const [id, action] of [
+    ["composer-send", "send"],
+    ["composer-save", "save_draft"],
+    ["composer-discard", "discard"],
+  ] as const) {
+    assert.match(
+      APP,
+      new RegExp(`data-testid="${id}"[\\s\\S]{0,400}?name: "${action}"`),
+      `${id} does not dispatch ${action}`,
+    );
+  }
+});

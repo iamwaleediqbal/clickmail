@@ -9,7 +9,7 @@ const config: NextConfig = {
   typescript: { ignoreBuildErrors: false },
   eslint: { ignoreDuringBuilds: false },
   // The dev overlay badge sits in the bottom-left corner of the viewport, which
-  // is inside every screenshot the runner takes. Those screenshots are
+  // is inside every screenshot the harness's runner takes of this page. Those screenshots are
   // committed and shown to visitors as evidence of a run, so a development
   // affordance must not appear in them.
   devIndicators: false,
