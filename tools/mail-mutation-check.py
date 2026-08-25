@@ -56,6 +56,9 @@ CASES = [
      "lib/mail/actions.ts", '      next.composer = null;\n      next.selectedId = null;\n      return { state: next, ok: true };\n    }\n    case "discard"',
      '      next.selectedId = null;\n      return { state: next, ok: true };  // MUTATED\n    }\n    case "discard"'),
 
+    ("an ignore pattern goes back to matching at any depth, swallowing a route",
+     ".vercelignore", '\n/tests/\n/tools/\n', '\n/tests/\ntools/  # MUTATED\n'),
+
     ("a corrupt folder in storage is trusted instead of reset",
      "lib/mail/state.ts",
      'folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",',

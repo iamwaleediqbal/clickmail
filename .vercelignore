@@ -1,7 +1,15 @@
+# Every pattern here is anchored with a leading slash, and that is not tidiness.
+#
+# `.vercelignore` follows .gitignore matching, where a pattern without a slash
+# matches a directory of that name at ANY depth. In the harness, an unanchored
+# `tools/` also matched `app/tools/` and dropped a route from the deployment
+# while every local check passed. There is no `app/tools` here today; anchoring
+# means there never can be a day when adding one silently breaks the build.
+
 # The environment is a plain Next.js app. Nothing here launches a browser or
 # reaches a model, so there is no Playwright to keep out of the build — that
 # moved to the harness with everything else.
 
 # Tests and the mutation tool are for a developer machine and CI.
-tests/
-tools/
+/tests/
+/tools/

@@ -150,3 +150,24 @@ test("every control the composer offers leads somewhere", () => {
     );
   }
 });
+
+test("no ignore pattern can swallow a route", () => {
+  /*
+   * `.vercelignore` follows .gitignore matching: a pattern with no slash in it
+   * matches a directory of that name at ANY depth. In the harness an unanchored
+   * `tools/`, written to keep the mutation scripts out of the build, also
+   * matched `app/tools/` — so that route was never uploaded, the nav linked to
+   * a 404, and every local check passed, because the pattern was correct about
+   * the directory it was named for.
+   *
+   * There is no colliding directory here today. The point is that adding one
+   * later must not silently break the deployment.
+   */
+  const patterns = readFileSync(path.join(ROOT, ".vercelignore"), "utf8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+
+  const unanchored = patterns.filter((line) => !line.startsWith("/"));
+  assert.deepEqual(unanchored, [], "these match at any depth, including inside app/");
+});
