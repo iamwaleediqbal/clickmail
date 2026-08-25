@@ -315,13 +315,20 @@ function Row({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "block truncate text-xs",
-              email.read ? "text-muted-foreground" : "font-semibold text-foreground",
-            )}
-          >
-            {email.from.split("@")[0]}
+          {/* Sender and date share a line, the way every mail client puts them.
+              The date does not shrink — a truncated date is worse than none. */}
+          <span className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate text-xs",
+                email.read ? "text-muted-foreground" : "font-semibold text-foreground",
+              )}
+            >
+              {email.from.split("@")[0]}
+            </span>
+            <span className="shrink-0 text-[11px] tabular text-muted-foreground">
+              {received(email.receivedAt, "short")}
+            </span>
           </span>
           <span
             className={cn(
@@ -361,6 +368,27 @@ function Row({
       </button>
     </div>
   );
+}
+
+/**
+ * When a message arrived, in the list's short form and the reader's long one.
+ *
+ * Fixed to UTC rather than the viewer's locale. The seed is a fixed world and a
+ * screenshot of it is evidence attached to a run — a mailbox that reads
+ * differently in Karachi and in California would make two runs of the same task
+ * incomparable for a reason that has nothing to do with the model. It also
+ * keeps what a computer-use agent reads off the screen identical to what a
+ * tool-calling agent reads out of the serialised state.
+ */
+function received(iso: string, form: "short" | "long"): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    ...(form === "long" ? { year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false } : {}),
+  }).format(at);
 }
 
 function Reader({ email, dispatch }: { email: Email; dispatch: (action: Action) => void }) {
@@ -507,6 +535,9 @@ function Reader({ email, dispatch }: { email: Email; dispatch: (action: Action) 
         <h2 className="text-lg font-semibold tracking-tight">{email.subject}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           {email.from} &rarr; {email.to}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {received(email.receivedAt, "long")}
         </p>
       </div>
       <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
