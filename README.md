@@ -308,7 +308,7 @@ and add one environment variable before deploying:
 
 | Name | Value |
 |---|---|
-| `SITE_URL` | the URL Vercel gave you, e.g. `https://clickmail.vercel.app` |
+| `SITE_URL` | the URL Vercel gave you, e.g. `https://clickmail-sigma.vercel.app` |
 
 OpenRouter attributes free-tier usage to that header. It is not required for
 the app to work, and setting it keeps the demo from looking like an anonymous
