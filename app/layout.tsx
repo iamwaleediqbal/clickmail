@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
+
+import { AppShell } from "@/components/app-shell";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "clickgym",
-  description:
-    "A browser gym for agents. Grades the final state of the app, not the route the agent took.",
+  title: { default: "clickgym", template: "%s — clickgym" },
+  description: "Run agents against a live application and grade the state they leave behind.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider>
+          <TooltipProvider delayDuration={200}>
+            <AppShell>{children}</AppShell>
+          </TooltipProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

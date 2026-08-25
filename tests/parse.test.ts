@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 
-import { parseTurn } from "../lib/agent/loop.ts";
+import { parseTurn } from "../lib/agent/parse.ts";
 
 test("reads a clean reply", () => {
   const result = parseTurn('{"thought": "star it", "action": {"name": "star", "args": {"id": "m1"}}}');
