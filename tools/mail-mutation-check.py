@@ -6,7 +6,7 @@ The gym is small, and its tests are correspondingly few — which makes it more
 important, not less, that each one can actually go red. Every case below
 reintroduces a bug this application has genuinely had.
 
-    python3 tools/gym-mutation-check.py
+    python3 tools/mail-mutation-check.py
 
 Files are restored afterwards, including on a mutation that fails and on a
 signal. Nothing can trap SIGKILL, so the pre-push check greps the tree as well.
@@ -59,10 +59,25 @@ CASES = [
     ("an ignore pattern goes back to matching at any depth, swallowing a route",
      ".vercelignore", '\n/tests/\n/tools/\n', '\n/tests/\ntools/  # MUTATED\n'),
 
+    ("pressing Compose wipes a draft that is already open",
+     "lib/mail/actions.ts",
+     "      if (next.composer && blank) return { state, ok: true };",
+     "      if (false) return { state, ok: true };  // MUTATED"),
+
+    ("a restored draft is trusted instead of validated",
+     "lib/mail/state.ts",
+     "    composer: composer(saved.composer),",
+     "    composer: (saved.composer ?? null) as MailState[\"composer\"],  // MUTATED"),
+
+    ("restored messages are trusted instead of filled in",
+     "lib/mail/state.ts",
+     "        ? saved.emails.map(email)",
+     "        ? saved.emails  // MUTATED"),
+
     ("a corrupt folder in storage is trusted instead of reset",
      "lib/mail/state.ts",
-     'folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",',
-     'folder: (saved.folder ?? "inbox") as Folder,  // MUTATED'),
+     'composer: composer(saved.composer),\n    folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",',
+     'composer: composer(saved.composer),\n    folder: (saved.folder ?? "inbox") as Folder,  // MUTATED'),
 ]
 
 _ORIGINALS = {}
@@ -112,6 +127,32 @@ def baseline_ok(tests):
             print(f"  BASELINE RED: {' '.join(tests)}")
     return _BASELINE[key]
 
+
+def refuse_if_already_mutated(paths):
+    """Refuse to start on a tree that still carries a mutation.
+
+    Every marker this tool writes is removed on exit, on SIGINT, SIGTERM and
+    SIGHUP. It cannot be removed on SIGKILL, and a hard timeout kills rather
+    than signals — which is exactly how a run of this tool once left
+    `// MUTATED` in a source file, where it sat until the next test run failed
+    for a reason nobody could place.
+
+    So the first thing it does is look. A marker already in the tree means the
+    last run died without cleaning up, and mutating on top of that would edit a
+    file whose "original" is already wrong — turning a lost cleanup into a
+    corrupted source file.
+    """
+    dirty = [p for p in dict.fromkeys(paths)
+             if pathlib.Path(p).exists() and "// MUTATED" in pathlib.Path(p).read_text()]
+    if dirty:
+        print("\nREFUSING TO START — a previous run left a mutation behind:\n")
+        for path in dirty:
+            print(f"    {path}")
+        print("\nRestore them (`git checkout -- <path>`) and run this again.\n")
+        sys.exit(2)
+
+
+refuse_if_already_mutated([case[1] for case in CASES])
 
 results = []
 for name, rel, old, new in CASES:

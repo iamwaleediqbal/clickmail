@@ -69,33 +69,20 @@ export interface MailState {
 
 export const STORAGE_KEY = "clickmail.mail.v1";
 
-/**
- * Storage namespace for one run.
+/*
+ * There was a pair of helpers here that namespaced storage per evaluation
+ * run — `storageKeyFor(runId)` and `clearRunStorage()` — and they are gone.
  *
- * Every evaluation gets its own key, so two runs can never observe each
- * other's mailbox and a previous run cannot leave anything behind for the
- * next one. Opened standalone there is no run id and the app uses the plain
- * key, which is what makes refreshing keep your mail.
+ * Nothing imported them. They were left behind when the harness moved to its
+ * own repository, and what they described was worse than dead: a run
+ * lifecycle, inside an application whose headline promise is that it knows
+ * nothing about runs. A reader looking for the seam between the environment
+ * and the thing evaluating it would have found this and concluded, reasonably,
+ * that the separation was decorative.
+ *
+ * One key, `STORAGE_KEY`, which is what the app actually uses. The harness gets
+ * a clean world by calling `reset()` on the published contract.
  */
-export function storageKeyFor(runId?: string | null): string {
-  return runId ? `${STORAGE_KEY}.run.${runId}` : STORAGE_KEY;
-}
-
-/** Remove every namespaced run key. Called when a run finishes or is abandoned. */
-export function clearRunStorage(runId?: string | null): void {
-  try {
-    if (runId) {
-      window.localStorage.removeItem(storageKeyFor(runId));
-      return;
-    }
-    const prefix = `${STORAGE_KEY}.run.`;
-    Object.keys(window.localStorage)
-      .filter((key) => key.startsWith(prefix))
-      .forEach((key) => window.localStorage.removeItem(key));
-  } catch {
-    // Blocked site data throws; nothing to clean up in that case anyway.
-  }
-}
 
 /**
  * Bring a restored mailbox up to the current shape.
@@ -112,11 +99,63 @@ export function hydrate(raw: unknown): MailState {
   const saved = (raw ?? {}) as Partial<MailState>;
   const fresh = seedState();
   return {
-    emails: Array.isArray(saved.emails) && saved.emails.length ? saved.emails : fresh.emails,
+    emails:
+      Array.isArray(saved.emails) && saved.emails.length
+        ? saved.emails.map(email)
+        : fresh.emails,
     selectedId: typeof saved.selectedId === "string" ? saved.selectedId : null,
-    composer: saved.composer ?? null,
+    composer: composer(saved.composer),
     folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",
     query: typeof saved.query === "string" ? saved.query : "",
+  };
+}
+
+/**
+ * A restored draft, or none.
+ *
+ * Every other field was type-checked and this one was passed straight through,
+ * so `{"composer": "yes"}` in storage survived hydration as the string "yes".
+ * The composer renders on anything truthy, and the first action that touches a
+ * draft calls `.trim()` on a field that is not there — a crash on load, from a
+ * value the app itself never wrote but any hand-edit or half-finished write
+ * could leave.
+ *
+ * A malformed draft is discarded rather than repaired. Guessing at what
+ * somebody was half-way through typing is not a service to them.
+ */
+function composer(value: unknown): MailState["composer"] {
+  if (!value || typeof value !== "object") return null;
+  const draft = value as Record<string, unknown>;
+  const field = (name: string) => (typeof draft[name] === "string" ? (draft[name] as string) : "");
+  return { to: field("to"), subject: field("subject"), body: field("body") };
+}
+
+/**
+ * One restored message, with every field the interface reads guaranteed present.
+ *
+ * The array was length-checked and then trusted, which is a check on the
+ * mailbox and not on the mail in it. A message missing `labels` — written by an
+ * older version, or by anything hand-editing storage — takes the list render
+ * down on `email.labels.length`, and the failure looks like a broken app rather
+ * than a stale value.
+ *
+ * Filled in rather than dropped: losing somebody's message because a field it
+ * never had is now required would be the worse of the two failures.
+ */
+function email(value: unknown): Email {
+  const saved = (value ?? {}) as Partial<Email>;
+  const text = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
+  return {
+    id: text(saved.id),
+    from: text(saved.from),
+    to: text(saved.to, "you@clickmail.example"),
+    subject: text(saved.subject),
+    body: text(saved.body),
+    receivedAt: text(saved.receivedAt),
+    folder: FOLDER_ORDER.includes(saved.folder as Folder) ? (saved.folder as Folder) : "inbox",
+    read: saved.read === true,
+    starred: saved.starred === true,
+    labels: Array.isArray(saved.labels) ? saved.labels.filter((l) => typeof l === "string") : [],
   };
 }
 

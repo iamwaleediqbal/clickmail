@@ -1,7 +1,9 @@
 import { strict as assert } from "node:assert";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { test } from "node:test";
 
-import { FOLDER_ORDER, STORAGE_KEY, hydrate, seedState, storageKeyFor } from "../lib/mail/state.ts";
+import { FOLDER_ORDER, STORAGE_KEY, hydrate, seedState } from "../lib/mail/state.ts";
 
 /**
  * What survives a refresh.
@@ -52,6 +54,10 @@ test("nothing that can be in storage makes hydrate throw", () => {
     { folder: null },
     { query: 7 },
     { composer: "yes" },
+    { composer: { to: 5 } },
+    { emails: [{ id: "a" }] }, // a message missing every other field
+    { emails: [{ id: "a", labels: "finance" }] },
+    { emails: [null] },
   ];
 
   for (const raw of junk) {
@@ -67,13 +73,42 @@ test("nothing that can be in storage makes hydrate throw", () => {
       restored!.selectedId === null || typeof restored!.selectedId === "string",
       "selectedId came back as neither null nor a string",
     );
+
+    // The two the junk list named and then never checked. `{composer: "yes"}`
+    // sat in this array while the loop asserted only on emails, query, folder
+    // and selectedId — so the case that crashes the app on the next action was
+    // listed, run, and could not fail.
+    const draft = restored!.composer;
+    assert.ok(
+      draft === null ||
+        (typeof draft.to === "string" &&
+          typeof draft.subject === "string" &&
+          typeof draft.body === "string"),
+      `composer came back as ${JSON.stringify(draft)}`,
+    );
+
+    for (const mail of restored!.emails) {
+      assert.ok(Array.isArray(mail.labels), `labels came back as ${JSON.stringify(mail.labels)}`);
+      assert.equal(typeof mail.subject, "string");
+      assert.equal(typeof mail.read, "boolean");
+      assert.ok(FOLDER_ORDER.includes(mail.folder), `a message came back in ${mail.folder}`);
+    }
   }
 });
 
 test("the storage key carries a version, so a shape change can be retired", () => {
   assert.match(STORAGE_KEY, /\.v\d+$/, `"${STORAGE_KEY}" has no version suffix`);
-  assert.equal(storageKeyFor(null), STORAGE_KEY);
-  assert.notEqual(storageKeyFor("abc"), STORAGE_KEY);
-  assert.ok(storageKeyFor("abc").startsWith(STORAGE_KEY), "a run key must stay under the same prefix");
+});
+
+test("there is exactly one storage key, because there is no such thing as a run here", () => {
+  // This application does not know what an evaluation is, and a per-run
+  // storage namespace would be it knowing. The harness gets a clean world by
+  // calling reset() on the published contract; there is nothing here to
+  // namespace and nothing to clean up afterwards.
+  const source = readFileSync(
+    path.join(import.meta.dirname, "..", "lib", "mail", "state.ts"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(source, /runId|storageKeyFor|clearRunStorage/);
 });
 

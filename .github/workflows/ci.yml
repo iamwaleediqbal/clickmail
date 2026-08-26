@@ -31,4 +31,7 @@ jobs:
 
       - run: npm install --no-audit --no-fund
       - run: npm run lint
+      # Listed in the README as one of the checks, and now actually run as one.
+      # A documented check nobody runs is a check that has already failed.
+      - run: npm run typecheck
       - run: npm run build

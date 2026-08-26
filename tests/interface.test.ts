@@ -224,3 +224,38 @@ test("every action refused while composing has a control in the reading pane", (
     assert.ok(ids.has(control), `${name} is refused while composing but has no "${control}" to be blocked from`);
   }
 });
+
+test("the README's mutation list is the list the tool actually runs", () => {
+  // Two lists of the same thing, in different files, is one list and one lie
+  // waiting to happen — this one was already a case short. A reader counting
+  // the bullet points is counting something real or they are not.
+  const root = path.join(import.meta.dirname, "..");
+  const tool = readFileSync(path.join(root, "tools", "mail-mutation-check.py"), "utf8");
+  const readme = readFileSync(path.join(root, "README.md"), "utf8");
+
+  const cases = [...tool.matchAll(/^ {4}\("([^"]+)",/gm)].map((m) => m[1]);
+  assert.ok(cases.length >= 10, "the mutation cases should still be parseable");
+
+  for (const name of cases) {
+    assert.ok(readme.includes(`- ${name}`), `the README does not list "${name}"`);
+  }
+
+  const claimed = readme.match(/reintroduces (\d+) bugs/)?.[1];
+  assert.equal(Number(claimed), cases.length, "the README's count disagrees with the tool");
+});
+
+test("every member the contract publishes is documented", () => {
+  // A published member nobody wrote down is a member nobody can rely on, and
+  // an undocumented one is how a contract stops being a contract.
+  const root = path.join(import.meta.dirname, "..");
+  const automation = readFileSync(path.join(root, "lib", "mail", "automation.ts"), "utf8");
+  const readme = readFileSync(path.join(root, "README.md"), "utf8");
+
+  const api = automation.slice(automation.indexOf("const api: GymAutomation = {"));
+  const members = [...api.matchAll(/^ {4}(\w+)[(:]/gm)].map((m) => m[1]);
+
+  assert.ok(members.includes("reset") && members.includes("state"), members.join(", "));
+  for (const member of members) {
+    assert.ok(readme.includes(member), `the README never mentions \`${member}\``);
+  }
+});

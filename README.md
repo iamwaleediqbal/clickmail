@@ -24,6 +24,8 @@ reset()      // discard everything, and report the world it starts in
 state()      // report the world as it stands
 controls()   // report every control currently rendered
 version      // 1, so a harness can refuse a shape it does not understand
+environment  // "clickmail-mailbox" — which world this is, so a harness
+             // pointed at the wrong page finds out before it starts
 ```
 
 No storage key, no DOM, no framework. The harness fetches the world before the
@@ -116,10 +118,10 @@ mysteriously, the harness normalises a bare origin to `/gym` before it starts.
 Node 22 or newer. No key, no account, no service.
 
 ```bash
-git clone git@github.com-personal:iamwaleediqbal/clickmail.git
+git clone https://github.com/iamwaleediqbal/clickmail.git
 cd clickmail
 npm install
-npm test                       # 28 tests
+npm test                       # 39 tests
 npm run dev                    # http://localhost:3000
 ```
 
@@ -144,24 +146,28 @@ is no code path to get wrong.
 ### Checks
 
 ```bash
-npm test           # 28 tests, no dependencies
+npm test           # 39 tests, no dependencies
 npm run typecheck
 npm run lint
 python3 tools/mail-mutation-check.py
 ```
 
-The last one reintroduces ten bugs this suite is supposed to catch, one at a
-time, and fails if the suite stays green:
+The last one reintroduces 14 bugs this suite is supposed to catch, one at
+a time, and fails if the suite stays green:
 
 - the folder rail is written out by hand instead of derived
 - the reducer performs a forward the interface has no control for
 - the reducer marks read without a control, which no person can do
 - the contract stops announcing what is rendered
 - the search box loses its clear control, so a second search costs seven turns
+- a restored mailbox stops having its missing fields filled in
 - Save draft goes back to only rewriting the open composer
 - a saved draft is filed somewhere other than drafts
 - saving a draft leaves the composer open, so the next action refiles it
-- a restored mailbox stops having its missing fields filled in
+- an ignore pattern goes back to matching at any depth, swallowing a route
+- pressing Compose wipes a draft that is already open
+- a restored draft is trusted instead of validated
+- restored messages are trusted instead of filled in
 - a corrupt folder in storage is trusted instead of reset
 
 A passing suite proves nothing if it could not go red. Two of those — the

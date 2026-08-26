@@ -366,3 +366,33 @@ test("draft ids stay unique after one is deleted", () => {
   const ids = state.emails.map((e) => e.id);
   assert.equal(new Set(ids).size, ids.length, "two messages share an id");
 });
+
+test("pressing Compose while a draft is open leaves the draft alone", () => {
+  // The screen and the world must not be able to disagree. The open composer
+  // holds what was typed in component state; resetting `state.composer` under
+  // it left the text on screen and an empty draft in the world.
+  const typed = applyAction(seedState(), {
+    name: "compose",
+    args: { to: "a@b.example", subject: "Hello", body: "Half a sentence" },
+  }).state;
+
+  const again = applyAction(typed, { name: "compose", args: {} });
+
+  assert.equal(again.ok, true, "it is not an error, it is a no-op");
+  assert.deepEqual(again.state.composer, typed.composer, "the draft survived");
+});
+
+test("compose with arguments still writes, because that is how a draft is saved", () => {
+  const open = applyAction(seedState(), { name: "compose", args: {} }).state;
+  const written = applyAction(open, {
+    name: "compose",
+    args: { to: "x@y.example", subject: "S", body: "B" },
+  }).state;
+
+  assert.deepEqual(written.composer, { to: "x@y.example", subject: "S", body: "B" });
+});
+
+test("compose with no arguments still opens one when none is open", () => {
+  const opened = applyAction(seedState(), { name: "compose", args: {} });
+  assert.deepEqual(opened.state.composer, { to: "", subject: "", body: "" });
+});
