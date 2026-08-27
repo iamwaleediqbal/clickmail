@@ -4,10 +4,32 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 
+/**
+ * The deployed origin. `metadataBase` is what turns the generated
+ * opengraph-image into an absolute URL — LinkedIn and Slack will not fetch a
+ * relative one, so without this the card silently has no picture.
+ */
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://clickmail-sigma.vercel.app";
+
+const DESCRIPTION =
+  "A mail client that exists to be operated by an agent, and to say what state it is in.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE),
   title: { default: "clickmail", template: "%s — clickmail" },
-  description:
-    "A mail client that exists to be operated by an agent, and to say what state it is in.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    url: SITE,
+    siteName: "clickmail",
+    title: "clickmail — a web application built to be driven by an agent",
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "clickmail — a web application built to be driven by an agent",
+    description: DESCRIPTION,
+  },
 };
 
 /**
